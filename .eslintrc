@@ -8,6 +8,8 @@
     "node": true,
     "jest": true
   },
+	"requireConfigFile": false,
+	"parser": "@babel/eslint-parser",
   "rules": {
     "no-console": "off",
     "no-unused-vars": "off"
