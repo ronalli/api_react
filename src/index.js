@@ -4,8 +4,9 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-
-import Note from './models/note.js';
+import typeDefs from './schema/schema.js';
+import * as resolvers from './resolvers/index.js';
+import * as models from './models/note.js';
 
 dotenv.config();
 
@@ -22,47 +23,15 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 4000;
 
-let notes = [
-  { id: '1', content: 'This is a note', author: 'Adam Scott' },
-  { id: '2', content: 'This is another note', author: 'Harlow Everly' },
-  { id: '3', content: 'Oh hey look, another note!', author: 'Riley Harrison' },
-];
-
-const typeDefs = `#graphql
-	type Note {
-		id: ID!
-		content: String!
-		author: String!
-	}
-	type Query {
-    hello: String!
-		notes: [Note!]!
-		note(id: ID!): Note!
-  }
-	type Mutation {
-		newNote(content: String!): Note!
-	}
-`;
-
-const resolvers = {
-  Query: {
-    hello: () => 'Hello friends!',
-    notes: async () => await Note.find(),
-    note: (parent, args) => {
-      return notes.find((note) => note.id === args.id);
-    },
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: async () => {
+    {
+      models;
+    }
   },
-  Mutation: {
-    newNote: async (parent, args) => {
-      return await Note.create({
-        content: args.content,
-        author: 'Bob Dilan',
-      });
-    },
-  },
-};
-
-const server = new ApolloServer({ typeDefs, resolvers });
+});
 await server.start();
 
 app.use('/graphql', expressMiddleware(server));
