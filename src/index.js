@@ -4,9 +4,13 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import typeDefs from './schema/schema.js';
-import * as resolvers from './resolvers/index.js';
+import customTypDefs from './schema/schema.js';
+import * as customResolvers from './resolvers/index.js';
 import * as models from './models/note.js';
+import {
+  typeDefs as scalarTypeDefs,
+  resolvers as scalarResolvers,
+} from 'graphql-scalars';
 
 dotenv.config();
 
@@ -24,8 +28,8 @@ app.use(express.json());
 const PORT = process.env.PORT || 4000;
 
 const server = new ApolloServer({
-  typeDefs,
-  resolvers,
+  typeDefs: [customTypDefs, scalarTypeDefs],
+  resolvers: [customResolvers, scalarResolvers],
   context: async () => {
     {
       models;
