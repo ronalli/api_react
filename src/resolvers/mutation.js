@@ -62,6 +62,42 @@ const Mutation = {
     if (!valid) throw new GraphQLError('Error signing in');
     return jwt.sign({ id: user._id }, process.env.JWT_SECRET);
   },
+  toggleFavorite: async (parent, { id }, { models, user }) => {
+    if (!user) throw new GraphQLError('You must log in');
+    let noteCheck = await models.Note.findById(id);
+    const hasUser = noteCheck.favoritedBy.indexOf(user.id);
+    if (hasUser >= 0) {
+      return await models.Note.findByIdAndUpdate(
+        id,
+        {
+          $pull: {
+            favoritedBy: mongoose.Types.ObjectId(user.id),
+          },
+          $inc: {
+            favoriteCount: -1,
+          },
+        },
+        {
+          new: true,
+        }
+      );
+    } else {
+      return await models.Note.findByIdAndUpdate(
+        id,
+        {
+          $push: {
+            favoritedBy: mongoose.Types.ObjectId(user.id),
+          },
+          $inc: {
+            favoriteCount: 1,
+          },
+        },
+        {
+          new: true,
+        }
+      );
+    }
+  },
 };
 
 export default Mutation;
