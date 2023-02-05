@@ -4,29 +4,34 @@ import gravater from '../util/gravatar.js';
 import { GraphQLError } from 'graphql';
 import mongoose from 'mongoose';
 
-import Note from '../models/note.js';
-import User from '../models/user.js';
-
 const Mutation = {
   newNote: async (parent, args, { models, user }) => {
     console.log(models, user);
     if (!user) throw new GraphQLError('You must be signed in to create a note');
-    return await Note.create({
+    return await models.Note.create({
       content: args.content,
-      author: 'Bob Dilan',
+      author: mongoose.Types.ObjectId(user.id),
     });
   },
-  deleteNote: async (parent, { id }, { models }) => {
+  deleteNote: async (parent, { id }, { models, user }) => {
+    if (!user) throw new GraphQLError('You must be signed in to create a note');
+    const note = await models.Note.findById(id);
+    if (note && String(note.author) !== user.id)
+      throw new GraphQLError("You don't have permissions to delete the note");
     try {
-      await Note.findByIdAndRemove({ _id: id });
+      await note.remove();
       return true;
     } catch (error) {
       console.log(error);
       return false;
     }
   },
-  updateNote: async (parent, { content, id }, { models }) => {
-    return await Note.findOneAndUpdate(
+  updateNote: async (parent, { content, id }, { models, user }) => {
+    if (!user) throw new GraphQLError('You must be signed in to update a note');
+    const note = await models.Note.findById(id);
+    if (note && String(note.author) !== user.id)
+      throw new GraphQLError("You don't have permissions to update the note");
+    return await models.Note.findOneAndUpdate(
       { _id: id },
       { $set: { content } },
       { new: true }
@@ -37,7 +42,7 @@ const Mutation = {
     const hashed = await bcrypt.hash(password, 7);
     const avatar = gravater(email);
     try {
-      const user = await User.create({
+      const user = await models.User.create({
         username,
         email,
         avatar,
@@ -51,7 +56,7 @@ const Mutation = {
   },
   signIn: async (parent, { username, email, password }, { models }) => {
     if (email) email = email.trim().toLowerCase();
-    const user = await User.findOne({ $or: [{ email }, { username }] });
+    const user = await models.User.findOne({ $or: [{ email }, { username }] });
     if (!user) throw new GraphQLError('Error signing in');
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new GraphQLError('Error signing in');
