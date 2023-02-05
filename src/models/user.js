@@ -16,8 +16,11 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    avater: {
+    avatar: {
       type: String,
+    },
+    notes: {
+      type: Array,
     },
   },
   {

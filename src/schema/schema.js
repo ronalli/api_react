@@ -17,14 +17,16 @@ scalar DateTime
 		id: ID!
 		username: String!
 		email: String!
-		avatar: String
+		avatar: String!
 		notes: [Note!]!
 	}
 
 	type Query {
-    hello: String!
 		notes: [Note!]!
 		note(id: ID!): Note!
+		user(username: String!): User
+		users: [User!]!
+		me: User!
   }
 	
 	type Mutation {

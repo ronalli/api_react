@@ -6,7 +6,6 @@ import mongoose from 'mongoose';
 
 const Mutation = {
   newNote: async (parent, args, { models, user }) => {
-    console.log(models, user);
     if (!user) throw new GraphQLError('You must be signed in to create a note');
     return await models.Note.create({
       content: args.content,
@@ -48,6 +47,7 @@ const Mutation = {
         avatar,
         password: hashed,
       });
+      console.log(user);
       return jwt.sign({ id: user._id }, process.env.JWT_SECRET);
     } catch (error) {
       console.log(error);
