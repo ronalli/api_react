@@ -9,6 +9,7 @@ import {
   resolvers as scalarResolvers,
 } from 'graphql-scalars';
 import jwt from 'jsonwebtoken';
+import helmet from 'helmet';
 
 import customTypDefs from './schema/schema.js';
 import * as customResolvers from './resolvers/index.js';
@@ -34,6 +35,7 @@ mongoose
   .catch((err) => console.log(`DB connection error: ${err}`));
 
 const app = express();
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
