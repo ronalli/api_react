@@ -4,12 +4,15 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+
 import {
   typeDefs as scalarTypeDefs,
   resolvers as scalarResolvers,
 } from 'graphql-scalars';
 import jwt from 'jsonwebtoken';
-import helmet from 'helmet';
+import http from 'http';
+import bodyParser from 'body-parser';
 
 import customTypDefs from './schema/schema.js';
 import * as customResolvers from './resolvers/index.js';
@@ -18,6 +21,7 @@ import * as models from './models/index.js';
 dotenv.config();
 
 const URL = `mongodb+srv://${process.env.LOGIN}:${process.env.PASSWORD}@cluster0.g4vmoqk.mongodb.net/database?retryWrites=true&w=majority`;
+const PORT = process.env.PORT || 4000;
 
 const getUser = (token) => {
   if (token) {
@@ -35,20 +39,22 @@ mongoose
   .catch((err) => console.log(`DB connection error: ${err}`));
 
 const app = express();
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-
-const PORT = process.env.PORT || 4000;
+const httpServer = http.createServer(app);
 
 const server = new ApolloServer({
   typeDefs: [customTypDefs, scalarTypeDefs],
   resolvers: [customResolvers, scalarResolvers],
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+  ],
 });
+
 await server.start();
 
 app.use(
-  '/graphql',
+  '/api/graphql',
+  cors(),
+  bodyParser.json(),
   expressMiddleware(server, {
     context: async ({ req, res }) => {
       {
@@ -59,7 +65,6 @@ app.use(
     },
   })
 );
+await new Promise((res) => httpServer.listen({ port: PORT }, res));
 
-app.listen(PORT, () =>
-  console.log(`Server running at http://localhost:${PORT}/graphql`)
-);
+console.log(`🚀 Server ready at http://localhost:${PORT}/api/graphql`);
