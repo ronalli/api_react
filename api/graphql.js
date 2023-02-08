@@ -5,11 +5,13 @@ import { expressMiddleware } from '@apollo/server/express4';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { makeExecutableSchema } from '@graphql-tools/schema';
 
 import {
   typeDefs as scalarTypeDefs,
   resolvers as scalarResolvers,
 } from 'graphql-scalars';
+
 import jwt from 'jsonwebtoken';
 import http from 'http';
 import bodyParser from 'body-parser';
@@ -41,12 +43,14 @@ mongoose
 const app = express();
 const httpServer = http.createServer(app);
 
-const server = new ApolloServer({
+const executableSchema = makeExecutableSchema({
   typeDefs: [customTypDefs, scalarTypeDefs],
   resolvers: [customResolvers, scalarResolvers],
-  plugins: [
-    ApolloServerPluginDrainHttpServer({ httpServer }),
-  ],
+});
+
+const server = new ApolloServer({
+  schema: executableSchema,
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
 await server.start();
